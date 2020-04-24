@@ -8,26 +8,29 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/pkg/errors"
 
 	"github.com/tj/mmake/parser"
+	"github.com/tj/mmake/resolver"
 )
 
 // OutputAllShort outputs all short help representations to the given writer.
 func OutputAllShort(r io.Reader, w io.Writer, targets []string) error {
 	comments, err := getComments(r, targets)
+
 	if err != nil {
 		return err
 	}
 
-	width := targetWidth(comments)
+	width := targetWidth(comments) + 15
 	fmt.Fprintf(w, "\n")
 	for _, c := range comments {
 		if c.Target == "" {
 			continue
 		}
 
-		fmt.Fprintf(w, "  %-*s %-s\n", width+2, c.Target, firstLine(c.Value))
+		printShort(w, c, width)
 	}
 
 	fmt.Fprintf(w, "\n")
@@ -47,7 +50,7 @@ func OutputAllLong(r io.Reader, w io.Writer, targets []string) error {
 			continue
 		}
 
-		fmt.Fprintf(w, "  %-s:\n%-s\n\n", c.Target, indent(indent(c.Value)))
+		printVerbose(w, c)
 	}
 
 	fmt.Fprintf(w, "\n")
@@ -56,7 +59,8 @@ func OutputAllLong(r io.Reader, w io.Writer, targets []string) error {
 
 // getComments parses, filters, and sorts all comment nodes.
 func getComments(r io.Reader, targets []string) ([]parser.Comment, error) {
-	nodes, err := parser.ParseRecursive(r, "/usr/local/include")
+	nodes, err := parser.ParseRecursive(r, resolver.IncludePath)
+
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing")
 	}
@@ -116,4 +120,21 @@ func firstLine(s string) string {
 // Indent the given string.
 func indent(s string) string {
 	return strings.Replace("  "+s, "\n", "\n  ", -1)
+}
+
+func printVerbose(w io.Writer, c parser.Comment) (int, error) {
+	if c.Default {
+		c.Value = c.Value + " (default)"
+	}
+
+	return fmt.Fprintf(w, "  %-s:\n%-s\n\n", color.HiBlueString(c.Target), indent(indent(c.Value)))
+}
+
+func printShort(w io.Writer, c parser.Comment, width int) (int, error) {
+	comment := firstLine(c.Value)
+	if c.Default {
+		comment = comment + " (default)"
+	}
+
+	return fmt.Fprintf(w, "  %-*s %-s\n", width+2, color.HiBlueString(c.Target), indent(indent(comment)))
 }

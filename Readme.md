@@ -7,10 +7,21 @@ and eventually more. It otherwise acts as a pass-through to standard make.
 
 ## Installation
 
-Grab a [binary](https://github.com/tj/mmake/releases) or:
+Via [gobinaries.com](https://gobinaries.com):
 
+```sh
+$ curl -sf https://gobinaries.com/tj/mmake/cmd/mmake | sudo sh
+```
+
+Build from source:
 ```
 $ go get github.com/tj/mmake/cmd/mmake
+```
+
+Homebrew:
+```
+$ brew tap tj/mmake https://github.com/tj/mmake.git
+$ brew install tj/mmake/mmake
 ```
 
 Next add the following alias to your profile:
@@ -127,7 +138,7 @@ $ make size
 
 ### Remote includes
 
-Includes may specify a URL for inclusion, which are automatically downloaded to /usr/local/include and become available to Make. Note that make resolves includes to this directory by default, so the Makefile will still work for regular users.
+Includes may specify a URL (http, https, or github shortcut) for inclusion, which are automatically downloaded to `/usr/local/include` and become available to Make. Note that make resolves includes to this directory by default, so the Makefile will still work for regular users.
 
 Includes are resolved recursively. For example you may have a standard set of includes for your team to run tests, lint, and deploy:
 
@@ -135,12 +146,20 @@ Includes are resolved recursively. For example you may have a standard set of in
 include github.com/apex/make/deploy
 include github.com/apex/make/lint
 include github.com/apex/make/test
+include https://github.com/apex/make/test/Makefile
+include https://github.com/apex/make/test/make.mk
 ```
 
 This can be a lot to remember, so you could also provide a file which includes the others:
 
 ```Makefile
 include github.com/apex/make/all
+```
+
+If the given repository contains an `index.mk` file, you can just declare:
+
+```Makefile
+include github.com/apex/make
 ```
 
 Or perhaps one per dev environment such as Node or Golang:
@@ -151,6 +170,14 @@ include github.com/apex/make/golang
 ```
 
 If you're worried about arbitrary code execution, then simply fork a project and maintain control over it.
+
+#### Update
+
+Once the remote includes are downloaded to `/usr/local/include`, `mmake` will not try to fetch them again. In order to get an updated copy of the remote includes, `mmake` provides an `update` target that will download them again:
+
+```
+$ make update
+```
 
 ## Registry
 
@@ -166,7 +193,6 @@ If you're looking to find or share makefiles check out the [Wiki](https://github
 
 ## Badges
 
-[![Build Status](https://semaphoreci.com/api/v1/tj/mmake/branches/master/badge.svg)](https://semaphoreci.com/tj/mmake)
 [![GoDoc](https://godoc.org/github.com/tj/mmake?status.svg)](https://godoc.org/github.com/tj/mmake)
 ![](https://img.shields.io/badge/license-MIT-blue.svg)
 ![](https://img.shields.io/badge/status-stable-green.svg)
